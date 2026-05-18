@@ -21,10 +21,26 @@ export default function ContactPage() {
     e.preventDefault();
     setFormState('loading');
     
-    // Simulate API call
-    setTimeout(() => {
-      setFormState('success');
-    }, 1500);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setFormState('success');
+      } else {
+        const data = await response.json();
+        console.error('Submission failed:', data.error);
+        setFormState('error');
+      }
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setFormState('error');
+    }
   };
 
   return (
@@ -57,7 +73,45 @@ export default function ContactPage() {
         <section className="container-max px-6 md:px-8 mb-32">
           <div className="max-w-[560px] mx-auto">
             <AnimatePresence mode="wait">
-              {formState !== 'success' ? (
+              {formState === 'success' ? (
+                <motion.div 
+                  key="success-message"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-green-50 border border-green-100 rounded-[2.5rem] p-12 text-center"
+                >
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-green-900 mb-4 tracking-tight">Message sent successfully</h3>
+                  <p className="text-green-800/70 font-medium">We’ll get back to you within one business day.</p>
+                  <button 
+                    onClick={() => setFormState('idle')}
+                    className="mt-10 text-green-600 font-bold text-sm underline underline-offset-4 decoration-green-600/30 hover:decoration-green-600 transition-all"
+                  >
+                    Send another message
+                  </button>
+                </motion.div>
+              ) : formState === 'error' ? (
+                <motion.div 
+                  key="error-message"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-red-50 border border-red-100 rounded-[2.5rem] p-12 text-center"
+                >
+                  <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <Send className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-red-900 mb-4 tracking-tight">Failed to send message</h3>
+                  <p className="text-red-800/70 font-medium">Something went wrong. Please try again or email us directly.</p>
+                  <button 
+                    onClick={() => setFormState('idle')}
+                    className="mt-10 text-red-600 font-bold text-sm underline underline-offset-4 decoration-red-600/30 hover:decoration-red-600 transition-all"
+                  >
+                    Try again
+                  </button>
+                </motion.div>
+              ) : (
                 <motion.form 
                   key="contact-form"
                   initial={{ opacity: 0 }}
@@ -131,25 +185,6 @@ export default function ContactPage() {
                     )}
                   </button>
                 </motion.form>
-              ) : (
-                <motion.div 
-                  key="success-message"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-green-50 border border-green-100 rounded-[2.5rem] p-12 text-center"
-                >
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                    <CheckCircle2 className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-green-900 mb-4 tracking-tight">Message sent successfully</h3>
-                  <p className="text-green-800/70 font-medium">We’ll get back to you within one business day.</p>
-                  <button 
-                    onClick={() => setFormState('idle')}
-                    className="mt-10 text-green-600 font-bold text-sm underline underline-offset-4 decoration-green-600/30 hover:decoration-green-600 transition-all"
-                  >
-                    Send another message
-                  </button>
-                </motion.div>
               )}
             </AnimatePresence>
 

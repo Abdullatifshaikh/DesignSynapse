@@ -34,7 +34,7 @@ import melovian1 from '../casestudyrevamp-pages/Melovian_Music_App_UI_UX_Mobile_
 import nalixo1 from '../casestudyrevamp-pages/Nalixo_AI_Powered_Crypto_Investment_App_UI_UX_Design_Behance/1.webp';
 import niore1 from '../casestudyrevamp-pages/Niore_Social_Ecommerce_Mobile_App_ThemeTags_Behance/1.webp';
 import privateInvest1 from '../casestudyrevamp-pages/Private_Investment_Club_App_Behance/1.webp';
-import revoltise1 from '../casestudyrevamp-pages/Revoltise_Your_EV’s_Smartest_CoPilot_Behance/1.webp';
+import revoltise1 from '../casestudyrevamp-pages/Docily_Telemedicine_App_UI_UX_Design__Behance/1.webp';
 import cryptoWallet1 from '../casestudyrevamp-pages/Smart_Crypto_Wallet_Landing_Page_Modern_UI_UX_Design_Behance/1.webp';
 import studyStream1 from '../casestudyrevamp-pages/StudyStream_Study_Mobile_App_Design_Behance/1.webp';
 import marketingAgent1 from '../casestudyrevamp-pages/UI_UX_Design_for_Marketing_Agency_Website_Behance/1.webp';

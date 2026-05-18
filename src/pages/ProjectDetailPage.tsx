@@ -27,7 +27,7 @@ const projectFolderMapping: Record<string, string> = {
   'nalixo': 'Nalixo_AI_Powered_Crypto_Investment_App_UI_UX_Design_Behance',
   'niore': 'Niore_Social_Ecommerce_Mobile_App_ThemeTags_Behance',
   'private-investment': 'Private_Investment_Club_App_Behance',
-  'revoltise': 'Revoltise_Your_EV’s_Smartest_CoPilot_Behance',
+  'revoltise': 'Docily_Telemedicine_App_UI_UX_Design__Behance',
   'smart-crypto-wallet': 'Smart_Crypto_Wallet_Landing_Page_Modern_UI_UX_Design_Behance',
   'studystream': 'StudyStream_Study_Mobile_App_Design_Behance',
   'marketing-agency': 'UI_UX_Design_for_Marketing_Agency_Website_Behance',
