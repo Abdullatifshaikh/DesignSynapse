@@ -1,27 +1,11 @@
 import express from "express";
 import * as path from "path";
-import fs from "fs";
+import * as fs from "fs";
 import cors from "cors";
 import { handleContact, handleHealth } from "./apiHandlers";
 
 export async function createServer() {
   const app = express();
-
-  // Initialize Resend lazily but safely
-  let resend: any = null;
-  const RESEND_KEY = process.env.RESEND_API_KEY;
-  
-  if (RESEND_KEY) {
-    try {
-      const { Resend } = await import("resend");
-      resend = new Resend(RESEND_KEY);
-      console.log("Resend initialized successfully");
-    } catch (err) {
-      console.error("Failed to load resend package:", err);
-    }
-  } else {
-    console.warn("RESEND_API_KEY environment variable is not set.");
-  }
 
   app.use(express.json());
   app.use(cors());
@@ -71,9 +55,7 @@ export async function createServer() {
     
     if (fs.existsSync(distPath)) {
       expressApp.use(express.static(distPath));
-      // For Vercel, we only handle non-API routes if it's the root/fallback
       expressApp.get("*", (req, res) => {
-        // If it starts with /api/, we already handled it or it's a 404
         if (req.url.startsWith("/api/")) return;
         
         const indexPath = path.join(distPath, "index.html");
@@ -83,6 +65,9 @@ export async function createServer() {
           res.status(404).send("index.html not found in dist/");
         }
       });
+    } else {
+      console.warn(`[WARN] dist folder not found at ${distPath}`);
+      serveStaticFallback(expressApp);
     }
   }
 

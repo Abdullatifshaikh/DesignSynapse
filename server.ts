@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createServer } from "./src/server";
 import * as path from "path";
 import * as fs from "fs";
@@ -17,21 +18,20 @@ async function bootstrap() {
       console.log(`[BOOT] dist exists: ${fs.existsSync(path.resolve(process.cwd(), "dist"))}`);
     });
   } catch (err) {
-    console.error("[BOOT] FATAL: Error during createServer():", err);
+    console.error("[BOOT] FATAL: Error during bootstrap():", err);
     process.exit(1);
   }
 }
 
+// Global error handlers
 process.on("uncaughtException", (err) => {
   console.error("[BOOT] Uncaught Exception:", err);
+  // Give some time for logs to process
+  setTimeout(() => process.exit(1), 100);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[BOOT] Unhandled Rejection at:", promise, "reason:", reason);
 });
 
-bootstrap().catch((err) => {
-  console.error("[BOOT] FATAL: Failed to bootstrap server:");
-  console.error(err);
-  process.exit(1);
-});
+bootstrap();
