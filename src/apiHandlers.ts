@@ -1,26 +1,26 @@
 import { Request, Response } from 'express';
+import { Resend } from 'resend';
 
-// Initialize Resend lazily but safely
-let resend: any = null;
+// Initialize Resend safely
+let resendInstance: Resend | null = null;
 
-async function getResend() {
-  if (resend) return resend;
+function getResend() {
+  if (resendInstance) return resendInstance;
   const RESEND_KEY = process.env.RESEND_API_KEY;
   if (RESEND_KEY) {
     try {
-      const { Resend } = await import("resend");
-      resend = new Resend(RESEND_KEY);
+      resendInstance = new Resend(RESEND_KEY);
       console.log("Resend initialized successfully");
-      return resend;
+      return resendInstance;
     } catch (err) {
-      console.error("Failed to load resend package:", err);
+      console.error("Failed to initialize resend:", err);
     }
   }
   return null;
 }
 
 export async function handleHealth(req: Request, res: Response) {
-  const rs = await getResend();
+  const rs = getResend();
   res.json({ 
     status: "ok", 
     env: process.env.NODE_ENV,
@@ -30,6 +30,18 @@ export async function handleHealth(req: Request, res: Response) {
 }
 
 export async function handleContact(req: Request, res: Response) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(204).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: "Method not allowed. Use POST." });
+  }
+
   console.log("Contact form submission attempt:", req.body);
   const { name, email, message, source } = req.body;
 
@@ -38,7 +50,7 @@ export async function handleContact(req: Request, res: Response) {
   }
 
   try {
-    const rs = await getResend();
+    const rs = getResend();
     if (!rs) {
       console.warn("RESEND_API_KEY not found. Simulating email send.");
       return res.json({ success: true, message: "Email sent (simulated)" });
