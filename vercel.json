@@ -2,11 +2,15 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server.ts"
+      "source": "/api/contact",
+      "destination": "/api/contact.ts"
     },
     {
-      "source": "/(.*)",
+      "source": "/api/health",
+      "destination": "/api/health.ts"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
