@@ -1,45 +1,53 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import nodemailer from 'nodemailer';
 
-// Initialize Resend safely
-let resendInstance: any = null;
+// Initialize Transporter safely
+let transporter: nodemailer.Transporter | null = null;
 
-async function getResend() {
-  if (resendInstance) return resendInstance;
-  const RESEND_KEY = process.env.RESEND_API_KEY;
-  if (RESEND_KEY) {
+function getTransporter() {
+  if (transporter) return transporter;
+  const GMAIL_USER = process.env.GMAIL_USER;
+  const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD;
+
+  if (GMAIL_USER && GMAIL_PASS) {
     try {
-      const { Resend } = await import("resend");
-      resendInstance = new Resend(RESEND_KEY);
-      console.log("Resend initialized successfully");
-      return resendInstance;
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: GMAIL_USER,
+          pass: GMAIL_PASS,
+        },
+      });
+      console.log("Nodemailer transporter initialized successfully");
+      return transporter;
     } catch (err) {
-      console.error("Failed to initialize resend:", err);
+      console.error("Failed to initialize nodemailer:", err);
     }
   }
   return null;
 }
 
-function setCorsHeaders(res: Response) {
+function setCorsHeaders(res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
 }
 
-export async function handleHealth(req: Request, res: Response) {
+export async function handleHealth(req: any, res: any) {
   setCorsHeaders(res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   
-  const rs = await getResend();
-  res.json({ 
+  const tp = getTransporter();
+  return res.json({ 
     status: "ok", 
     env: process.env.NODE_ENV,
-    resendInitialized: !!rs,
+    nodemailerInitialized: !!tp,
     timestamp: new Date().toISOString()
   });
 }
 
-export async function handleContact(req: Request, res: Response) {
+export async function handleContact(req: any, res: any) {
   setCorsHeaders(res);
   
   // Handle CORS preflight
@@ -52,49 +60,76 @@ export async function handleContact(req: Request, res: Response) {
   }
 
   console.log("Contact form submission attempt:", req.body);
-  const data = req.body || {};
+  
+  // Robust body parsing check
+  let data = req.body;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (e) {
+      console.error("Failed to parse body string:", e);
+    }
+  }
+  
+  data = data || {};
   const { name, email, message, source } = data;
 
   if (!name || !email || !message) {
-    return res.status(400).json({ error: "Missing required fields (name, email, message)" });
+    return res.status(400).json({ 
+      error: "Missing required fields (name, email, message)",
+      receivedStatus: { name: !!name, email: !!email, message: !!message }
+    });
   }
 
   try {
-    const rs = await getResend();
-    if (!rs) {
-      console.warn("RESEND_API_KEY not found. Simulating email send.");
-      return res.json({ success: true, message: "Email sent (simulated - RESEND_API_KEY missing)" });
+    const tp = getTransporter();
+    if (!tp) {
+      console.warn("GMAIL credentials not found. Simulating email send.");
+      return res.json({ success: true, message: "Email sent (simulated - Gmail credentials missing)" });
     }
 
     const recipient = process.env.CONTACT_EMAIL || "abdullatif.designsynapse@gmail.com";
+    const gmailUser = process.env.GMAIL_USER;
 
-    const { data: resendData, error } = await rs.emails.send({
-      from: "Contact Form <onboarding@resend.dev>",
-      to: [recipient],
+    const mailOptions = {
+      from: `"${name}" <${gmailUser}>`, // Must be from the Gmail user
+      to: recipient,
+      replyTo: email,
       subject: `[Website] New Contact Form Submission from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\nSource: ${source || "Not specified"}\n\nMessage:\n${message}`,
       html: `
-        <div style="font-family: sans-serif; padding: 20px; color: #333;">
-          <h1 style="color: #000; border-bottom: 1px solid #eee; padding-bottom: 10px;">New Website Contact Submission</h1>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <p style="white-space: pre-wrap;"><strong>Message:</strong><br />${message}</p>
-          <p><strong>Source:</strong> ${source || "Not specified"}</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #999;">Sent from your website contact form.</p>
+        <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px;">
+          <h1 style="color: #000; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-top: 0;">New Website Contact</h1>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; width: 100px;">Name:</td>
+              <td style="padding: 10px 0;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold;">Email:</td>
+              <td style="padding: 10px 0;"><a href="mailto:${email}" style="color: #2563eb; text-decoration: none;">${email}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold;">Source:</td>
+              <td style="padding: 10px 0;">${source || "Not specified"}</td>
+            </tr>
+          </table>
+          <div style="margin-top: 20px; padding: 15px; background-color: #f9fafb; border-radius: 6px;">
+            <p style="margin-top: 0; font-weight: bold; color: #666;">Message:</p>
+            <p style="white-space: pre-wrap; margin-bottom: 0;">${message}</p>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #999; margin-bottom: 0;">This email was sent from your website's contact form. You can reply directly to this email to contact ${name}.</p>
         </div>
       `,
-    });
+    };
 
-    if (error) {
-      console.error("Resend error:", error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    console.log("Email sent successfully:", resendData?.id);
-    res.json({ success: true, id: resendData?.id });
+    const info = await tp.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
+    return res.json({ success: true, messageId: info.messageId });
   } catch (err: any) {
-    console.error("Server error during contact form submission:", err);
-    res.status(500).json({ 
+    console.error("API error during contact form submission:", err);
+    return res.status(500).json({ 
       error: "Internal server error", 
       message: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
