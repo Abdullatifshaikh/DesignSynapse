@@ -32,23 +32,14 @@ export default function ContactPage() {
 
       if (response.ok) {
         setFormState('success');
+        setFormData({ name: '', email: '', message: '', source: '' });
       } else {
-        const text = await response.text();
-        console.error('Submission failed with status:', response.status);
-        console.error('Response body:', text);
-        
-        try {
-          // Try to parse as JSON if possible
-          const data = JSON.parse(text);
-          if (data.error) console.error('Error detail:', data.error);
-        } catch (e) {
-          // Not JSON, that's fine, we already logged the text
-        }
-        
+        const data = await response.json();
+        console.error('Submission failed:', data.error);
         setFormState('error');
       }
-    } catch (err) {
-      console.error('Error submitting form:', err);
+    } catch (error) {
+      console.error('Error submitting form:', error);
       setFormState('error');
     }
   };
@@ -83,45 +74,7 @@ export default function ContactPage() {
         <section className="container-max px-6 md:px-8 mb-32">
           <div className="max-w-[560px] mx-auto">
             <AnimatePresence mode="wait">
-              {formState === 'success' ? (
-                <motion.div 
-                  key="success-message"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-green-50 border border-green-100 rounded-[2.5rem] p-12 text-center"
-                >
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                    <CheckCircle2 className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-green-900 mb-4 tracking-tight">Message sent successfully</h3>
-                  <p className="text-green-800/70 font-medium">We’ll get back to you within one business day.</p>
-                  <button 
-                    onClick={() => setFormState('idle')}
-                    className="mt-10 text-green-600 font-bold text-sm underline underline-offset-4 decoration-green-600/30 hover:decoration-green-600 transition-all"
-                  >
-                    Send another message
-                  </button>
-                </motion.div>
-              ) : formState === 'error' ? (
-                <motion.div 
-                  key="error-message"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-red-50 border border-red-100 rounded-[2.5rem] p-12 text-center"
-                >
-                  <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8">
-                    <Send className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-red-900 mb-4 tracking-tight">Failed to send message</h3>
-                  <p className="text-red-800/70 font-medium">Something went wrong. Please try again or email us directly.</p>
-                  <button 
-                    onClick={() => setFormState('idle')}
-                    className="mt-10 text-red-600 font-bold text-sm underline underline-offset-4 decoration-red-600/30 hover:decoration-red-600 transition-all"
-                  >
-                    Try again
-                  </button>
-                </motion.div>
-              ) : (
+              {formState !== 'success' ? (
                 <motion.form 
                   key="contact-form"
                   initial={{ opacity: 0 }}
@@ -177,6 +130,16 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {formState === 'error' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium"
+                    >
+                      Something went wrong. Please try again or email us directly.
+                    </motion.div>
+                  )}
+
                   <button 
                     disabled={formState === 'loading'}
                     className="w-full relative group overflow-hidden bg-brand-blue text-white py-5 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all hover:shadow-2xl hover:shadow-brand-blue/20 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
@@ -195,6 +158,25 @@ export default function ContactPage() {
                     )}
                   </button>
                 </motion.form>
+              ) : (
+                <motion.div 
+                  key="success-message"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-green-50 border border-green-100 rounded-[2.5rem] p-12 text-center"
+                >
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-green-900 mb-4 tracking-tight">Message sent successfully</h3>
+                  <p className="text-green-800/70 font-medium">We’ll get back to you within one business day.</p>
+                  <button 
+                    onClick={() => setFormState('idle')}
+                    className="mt-10 text-green-600 font-bold text-sm underline underline-offset-4 decoration-green-600/30 hover:decoration-green-600 transition-all"
+                  >
+                    Send another message
+                  </button>
+                </motion.div>
               )}
             </AnimatePresence>
 

@@ -1,8 +1,6 @@
 {
   "name": "DesignSynapse",
-  "description": "High-converting design and development studio for SaaS founders. Build your MVP in 6 weeks.",
+  "description": "High-converting design and development studio for SaaS founders with integrated contact form functionality. Build your MVP in 6 weeks.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
