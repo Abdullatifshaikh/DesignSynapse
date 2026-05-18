@@ -33,8 +33,18 @@ export default function ContactPage() {
       if (response.ok) {
         setFormState('success');
       } else {
-        const data = await response.json();
-        console.error('Submission failed:', data.error);
+        const text = await response.text();
+        console.error('Submission failed with status:', response.status);
+        console.error('Response body:', text);
+        
+        try {
+          // Try to parse as JSON if possible
+          const data = JSON.parse(text);
+          if (data.error) console.error('Error detail:', data.error);
+        } catch (e) {
+          // Not JSON, that's fine, we already logged the text
+        }
+        
         setFormState('error');
       }
     } catch (err) {
