@@ -150,17 +150,29 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[BOOT] Server successfully started`);
-    console.log(`[BOOT] Listening on 0.0.0.0:${PORT}`);
-    console.log(`[BOOT] NODE_ENV: ${process.env.NODE_ENV}`);
-    console.log(`[BOOT] DIST_PATH: ${path.resolve(process.cwd(), "dist")}`);
-    console.log(`[BOOT] dist exists: ${fs.existsSync(path.resolve(process.cwd(), "dist"))}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[BOOT] Server successfully started`);
+      console.log(`[BOOT] Listening on 0.0.0.0:${PORT}`);
+      console.log(`[BOOT] NODE_ENV: ${process.env.NODE_ENV}`);
+      console.log(`[BOOT] DIST_PATH: ${path.resolve(process.cwd(), "dist")}`);
+      console.log(`[BOOT] dist exists: ${fs.existsSync(path.resolve(process.cwd(), "dist"))}`);
+    });
+  } else {
+    console.log("[BOOT] Vercel environment detected, skipping app.listen()");
+  }
+
+  return app;
 }
 
-startServer().catch((err) => {
+const appPromise = startServer().catch((err) => {
   console.error("FATAL: Failed to start server entry point:");
   console.error(err);
   process.exit(1);
 });
+
+export default async (req: any, res: any) => {
+  const app = await appPromise;
+  if (!app) return res.status(500).send("Server failed to initialize");
+  return app(req, res);
+};
